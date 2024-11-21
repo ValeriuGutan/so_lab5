@@ -1,5 +1,8 @@
 import java.io.Console;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -37,12 +40,17 @@ public class SystemControl {
                     System.out.println("Se execută restart...");
                     if (os.contains("mac")) {
                         restartMac();
+                    } else if (os.contains("windows")) {
+                        restartWindows();
+                        
                     }
                     break;
                 case 2:
                     System.out.println("Se execută oprirea...");
                     if (os.contains("mac")) {
                         shutdownMac();
+                    } else if (os.contains("windows")) {
+                        shutdownWindows();
                     }
                     break;
                 default:
@@ -74,6 +82,34 @@ public class SystemControl {
         process.waitFor();
         System.out.println("Comanda de restart Mac a fost executată: " + command);
     }
+    private static void shutdownWindows() throws IOException {
+        String command = "shutdown /s /t 0";
+        Runtime.getRuntime().exec(command);
+        System.out.println("Comanda de oprire Windows a fost executată: " + command);
+    }
 
+        private static void writeMessageToDesktop(String message) throws IOException {
+        String userHome = System.getProperty("user.home");
+        Path desktopPath = Paths.get(userHome, "Desktop", "system_log.txt");
+
+        try (FileWriter writer = new FileWriter(desktopPath.toFile())) {
+            writer.write(message);
+            System.out.println("Mesajul a fost scris în: " + desktopPath);
+        }
+    }
+
+    private static void restartWindows() throws IOException {
+        String command = "shutdown /r /t 0";
+        Runtime.getRuntime().exec(command);
+        System.out.println("Comanda de restart Windows a fost executată: " + command);
+    }
+
+    private static void openFileOnDesktop(String command) throws IOException {
+        String userHome = System.getProperty("user.home");
+        Path desktopPath = Paths.get(userHome, "Desktop", "system_log.txt");
+
+        Runtime.getRuntime().exec(new String[]{command, desktopPath.toString()});
+        System.out.println("Fișierul a fost deschis: " + desktopPath);
+    }
 
 }
