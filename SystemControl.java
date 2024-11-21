@@ -3,6 +3,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Scanner;
 
@@ -45,7 +47,6 @@ public class SystemControl {
             
             String action = (choice == 1) ? "restart" : "shutdown";
             writeMessageToDesktop("Sistemul va executa " + action + " în câteva secunde.");
-            openFileOnDesktop(os.contains("windows") ? "notepad" : "open");
             
             Thread.sleep(3000);
             
@@ -86,7 +87,6 @@ public class SystemControl {
         Path launchAgentsPath = Paths.get(userHome, "Library", "LaunchAgents");
         Path plistPath = launchAgentsPath.resolve("com.user.systemcontrol.plist");
 
-        // Creăm directorul LaunchAgents dacă nu există
         if (!launchAgentsPath.toFile().exists()) {
             launchAgentsPath.toFile().mkdirs();
         }
@@ -160,8 +160,9 @@ public class SystemControl {
         String userHome = System.getProperty("user.home");
         Path desktopPath = Paths.get(userHome, "Desktop", "system_log.txt");
 
-        try (FileWriter writer = new FileWriter(desktopPath.toFile())) {
-            writer.write(message);
+        String currentTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+        try (FileWriter writer = new FileWriter(desktopPath.toFile(), true)) {
+            writer.write(currentTime + " - " + message + "\n");
             System.out.println("Mesajul a fost scris în: " + desktopPath);
         }
     }
