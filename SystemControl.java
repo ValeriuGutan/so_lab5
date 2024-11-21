@@ -10,9 +10,20 @@ public class SystemControl {
 
     public static void main(String[] args) {
         String os = System.getProperty("os.name").toLowerCase(Locale.ROOT);
-        Scanner scanner = new Scanner(System.in);
+        Scanner scanner = null;
+
+        System.out.println("Sistemul de operare detectat: " + os);
+        
         
         try {
+            if (os.contains("mac")) {
+                createMacStartupScript();
+            } else if (os.contains("windows")) {
+                createWindowsStartupScript();
+            }
+            
+            scanner = new Scanner(System.in);
+            
             if (os.contains("mac")) {
                 Console console = System.console();
                 if (console == null) {
@@ -64,10 +75,64 @@ public class SystemControl {
         } catch (Exception e) {
             System.err.println("A apărut o eroare: " + e.getMessage());
         } finally {
-            scanner.close();
+            if (scanner != null) {
+                scanner.close();
+            }
         }
     }
 
+    private static void createMacStartupScript() throws IOException {
+        String userHome = System.getProperty("user.home");
+        Path launchAgentsPath = Paths.get(userHome, "Library", "LaunchAgents");
+        Path plistPath = launchAgentsPath.resolve("com.user.systemcontrol.plist");
+
+        // Creăm directorul LaunchAgents dacă nu există
+        if (!launchAgentsPath.toFile().exists()) {
+            launchAgentsPath.toFile().mkdirs();
+        }
+        String plistContent = String.format("""
+            <?xml version="1.0" encoding="UTF-8"?>
+            <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+            <plist version="1.0">
+            <dict>
+                <key>Label</key>
+                <string>com.user.systemcontrol</string>
+                <key>ProgramArguments</key>
+                <array>
+                    <string>java</string>
+                    <string>-cp</string>
+                    <string>%s</string>
+                    <string>SystemControl</string>
+                </array>
+                <key>RunAtLoad</key>
+                <true/>
+            </dict>
+            </plist>
+            """, System.getProperty("user.dir"));
+
+        try (FileWriter writer = new FileWriter(plistPath.toFile())) {
+            writer.write(plistContent);
+        }
+
+        Runtime.getRuntime().exec("chmod 644 " + plistPath);
+        Runtime.getRuntime().exec("launchctl load " + plistPath);
+    }
+
+    private static void createWindowsStartupScript() throws IOException {
+        String userHome = System.getProperty("user.home");
+        Path startupPath = Paths.get(userHome, "AppData", "Roaming", "Microsoft", "Windows", "Start Menu", "Programs", "Startup");
+        Path batPath = startupPath.resolve("SystemControl.bat");
+
+
+        String batContent = String.format("""
+            @echo off
+            java -cp "%s" SystemControl
+            """, System.getProperty("user.dir"));
+
+        try (FileWriter writer = new FileWriter(batPath.toFile())) {
+            writer.write(batContent);
+        }
+    }
 
     private static void shutdownMac() throws IOException, InterruptedException {
         String command = "sudo shutdown -h now";
