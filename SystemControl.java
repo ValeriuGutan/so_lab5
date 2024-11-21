@@ -32,8 +32,11 @@ public class SystemControl {
             
             int choice = scanner.nextInt();
             
+            String action = (choice == 1) ? "restart" : "shutdown";
+            writeMessageToDesktop("Sistemul va executa " + action + " în câteva secunde.");
+            openFileOnDesktop(os.contains("windows") ? "notepad" : "open");
             
-            Thread.sleep(2000);
+            Thread.sleep(3000);
             
             switch (choice) {
                 case 1:
